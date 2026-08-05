@@ -22,7 +22,7 @@
 
 <label class="mb-4 block" for={id}>
 	<span class="field-label">
-		{label}{#if required}<span class="text-[var(--danger)]"> *</span>{/if}
+		{label}{#if required}<span class="text-(--danger)"> *</span>{/if}
 	</span>
 	<select
 		{id}
@@ -36,6 +36,6 @@
 		{/each}
 	</select>
 	{#if error}
-		<span class="mt-1.5 block text-xs text-[var(--danger)]">{error}</span>
+		<span class="mt-1.5 block text-xs text-(--danger)">{error}</span>
 	{/if}
 </label>

@@ -9,11 +9,29 @@ import type { Course, Enrollment, PersonalInfo } from '$lib/types/enrollment';
 /** 单步校验错误表：key 为表单字段名 */
 export type StepErrors = Record<string, string>;
 
-/** 第 1 步：姓名、电话、地址必填（邮箱可选） */
+/** 中国大陆手机号：1 开头，第二位 3–9，共 11 位 */
+const PHONE_RE = /^1[3-9]\d{9}$/;
+
+/** 常见邮箱格式（非空时校验；空邮箱仍视为可选） */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** 第 1 步：姓名、电话、地址必填；电话/邮箱做格式校验（邮箱可空） */
 export function validatePersonal(personal: PersonalInfo): StepErrors {
 	const errors: StepErrors = {};
 	if (!personal.name?.trim()) errors.name = '请填写姓名';
-	if (!personal.phone?.trim()) errors.phone = '请填写联系电话';
+
+	const phone = personal.phone?.trim() ?? '';
+	if (!phone) {
+		errors.phone = '请填写联系电话';
+	} else if (!PHONE_RE.test(phone)) {
+		errors.phone = '请输入有效的 11 位手机号';
+	}
+
+	const email = personal.email?.trim() ?? '';
+	if (email && !EMAIL_RE.test(email)) {
+		errors.email = '请输入有效的邮箱地址';
+	}
+
 	if (!personal.address?.trim()) errors.address = '请填写地址';
 	return errors;
 }

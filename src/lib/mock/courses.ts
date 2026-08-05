@@ -25,13 +25,13 @@ export const mockCourses: Course[] = [
 				id: 'v-gz',
 				name: '广州培训中心',
 				address: '广州市天河区示例路 1 号',
-				capacity: 30,
+				capacity: 2,
 				sessions: [
 					{
 						id: 's-gz-1',
 						startsAt: '2026-09-20T14:00:00+08:00',
 						endsAt: '2026-09-20T17:00:00+08:00',
-						seatsLeft: 30
+						seatsLeft: 2
 					}
 				]
 			},
@@ -39,13 +39,13 @@ export const mockCourses: Course[] = [
 				id: 'v-sz',
 				name: '深圳培训中心',
 				address: '深圳市南山区示例大道 88 号',
-				capacity: 20,
+				capacity: 1,
 				sessions: [
 					{
 						id: 's-sz-1',
 						startsAt: '2026-09-20T14:00:00+08:00',
 						endsAt: '2026-09-20T17:00:00+08:00',
-						seatsLeft: 20
+						seatsLeft: 1
 					}
 				]
 			}

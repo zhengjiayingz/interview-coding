@@ -1,0 +1,349 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = path.resolve('src');
+const t = (s) => s.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+
+const files = {
+	'routes/applications/+page.svelte': t(`<script lang="ts">
+	import { applications } from '$lib/stores/applications';
+	import { getCourseById } from '$lib/mock/courses';
+	import { formatDateTime } from '$lib/utils/dates';
+
+	function statusLabel(status: string) {
+		if (status === 'submitted') return '\\u5df2\\u63d0\\u4ea4';
+		if (status === 'draft') return '\\u8349\\u7a3f';
+		if (status === 'cancelled') return '\\u5df2\\u53d6\\u6d88';
+		return status;
+	}
+
+	function modeLabel(mode: string) {
+		if (mode === 'online') return '\\u7ebf\\u4e0a';
+		if (mode === 'offline') return '\\u7ebf\\u4e0b';
+		return mode;
+	}
+</script>
+
+<section class="mb-8">
+	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
+		My Applications
+	</p>
+	<h1 class="page-title">\\u6211\\u7684\\u62a5\\u540d</h1>
+	<p class="page-lead">\\u67e5\\u770b\\u7533\\u8bf7\\u8fdb\\u5ea6\\uff1b\\u5f00\\u8bfe\\u524d\\u4e00\\u5929\\u4e4b\\u524d\\u53ef\\u4fee\\u6539\\u90e8\\u5206\\u62a5\\u540d\\u4fe1\\u606f\\u3002</p>
+</section>
+
+{#if $applications.length === 0}
+	<section class="surface empty-state">
+		<p class="mb-1 font-[family-name:var(--font-display)] text-2xl text-(--ink)">\\u8fd8\\u6ca1\\u6709\\u62a5\\u540d\\u8bb0\\u5f55</p>
+		<p class="mb-5 text-sm">\\u4ece\\u8bfe\\u7a0b\\u76ee\\u5f55\\u6311\\u9009\\u4e00\\u95e8\\uff0c\\u5b8c\\u6210\\u5411\\u5bfc\\u5373\\u53ef\\u51fa\\u73b0\\u5728\\u8fd9\\u91cc\\u3002</p>
+		<a class="btn btn-primary" href="/courses">\\u53bb\\u9009\\u8bfe</a>
+	</section>
+{:else}
+	<ul class="space-y-3">
+		{#each $applications as item (item.id)}
+			{@const course = getCourseById(item.courseId)}
+			{@const venue = course?.venues.find((v) => v.id === item.venueId)}
+			<li class="surface flex items-center justify-between gap-4 p-5 transition hover:-translate-y-0.5">
+				<div>
+					<p class="font-semibold text-(--ink)">{course?.title ?? item.courseId}</p>
+					<p class="mt-1 text-xs text-[rgba(11,46,47,0.5)]">
+						{modeLabel(item.learningMode)}
+						{#if venue}
+							\\u00b7 {venue.name}
+						{/if}
+						\\u00b7 {statusLabel(item.status)} \\u00b7 \\u63d0\\u4ea4\\u4e8e {formatDateTime(item.createdAt)}
+					</p>
+					<p class="mt-1 text-sm text-(--ink-soft)">{item.personal.name} \\u00b7 {item.personal.phone}</p>
+				</div>
+				<a class="btn btn-ghost !px-3 !py-1.5 text-xs" href="/applications/{item.id}">\\u67e5\\u770b\\u8be6\\u60c5</a>
+			</li>
+		{/each}
+	</ul>
+{/if}
+`),
+
+	'routes/courses/+page.svelte': t(`<script lang="ts">
+	import CourseCard from '$lib/components/CourseCard.svelte';
+	import { mockCourses } from '$lib/mock/courses';
+</script>
+
+<section class="mb-8 md:mb-10">
+	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
+		Course Catalog
+	</p>
+	<h1 class="page-title">\\u9009\\u62e9\\u4e00\\u95e8\\u8bfe\\u7a0b\\uff0c\\u5f00\\u59cb\\u62a5\\u540d</h1>
+	<p class="page-lead">
+		\\u652f\\u6301\\u7ebf\\u4e0a\\u81ea\\u5b66\\u4e0e\\u7ebf\\u4e0b\\u5b9a\\u70b9\\u57f9\\u8bad\\u3002\\u7ebf\\u4e0b\\u573a\\u6b21\\u6709\\u540d\\u989d\\u9650\\u5236\\uff0c\\u8bf7\\u5728\\u5f00\\u8bfe\\u524d\\u4e00\\u5929\\u5b8c\\u6210\\u4fe1\\u606f\\u786e\\u8ba4\\u4e0e\\u4fee\\u6539\\u3002
+	</p>
+</section>
+
+<div class="grid gap-5 md:grid-cols-2">
+	{#each mockCourses as course, i (course.id)}
+		<div style="animation-delay: {i * 70}ms" class="page-enter">
+			<CourseCard {course} />
+		</div>
+	{/each}
+</div>
+`),
+
+	'lib/components/CourseCard.svelte': t(`<script lang="ts">
+	import type { Course } from '$lib/types/enrollment';
+	import { formatDateTime } from '$lib/utils/dates';
+
+	interface Props {
+		course: Course;
+	}
+
+	let { course }: Props = $props();
+
+	const modeLabel: Record<Course['mode'], string> = {
+		online: '\\u7ebf\\u4e0a\\u5b66\\u4e60',
+		offline: '\\u7ebf\\u4e0b\\u57f9\\u8bad',
+		hybrid: '\\u6df7\\u5408\\u6a21\\u5f0f'
+	};
+</script>
+
+<article class="course-card surface flex h-full flex-col p-5 md:p-6">
+	<div class="mb-4 flex items-start justify-between gap-3">
+		<h2 class="font-[family-name:var(--font-display)] text-xl leading-snug text-(--ink) md:text-[1.35rem]">
+			{course.title}
+		</h2>
+		<span class={course.mode === 'offline' ? 'chip chip-warm' : 'chip'}>
+			{modeLabel[course.mode]}
+		</span>
+	</div>
+
+	<p class="mb-5 flex-1 text-sm leading-relaxed text-[rgba(11,46,47,0.68)]">
+		{course.description}
+	</p>
+
+	<div class="mb-5 flex items-center gap-2 text-xs text-[rgba(11,46,47,0.55)]">
+		<span
+			class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(15,118,110,0.1)]"
+			aria-hidden="true"
+		>
+			<span class="h-2 w-2 rounded-full bg-(--accent)"></span>
+		</span>
+		<span>\\u5f00\\u8bfe {formatDateTime(course.startAt)}</span>
+	</div>
+
+	<a href="/apply/{course.id}" class="btn btn-primary self-start">\\u7acb\\u5373\\u62a5\\u540d</a>
+</article>
+`),
+
+	'lib/components/VenueSessionPicker.svelte': t(`<script lang="ts">
+	import SelectField from '$lib/components/fields/SelectField.svelte';
+	import { remainingSeats } from '$lib/domain/capacity';
+	import type { Course, Enrollment } from '$lib/types/enrollment';
+	import { formatDateTime } from '$lib/utils/dates';
+
+	interface Props {
+		course: Course;
+		venueId?: string;
+		sessionId?: string;
+		enrollments?: Enrollment[];
+		errors?: Record<string, string>;
+		/** \\u4fee\\u6539\\u5df2\\u6709\\u62a5\\u540d\\u65f6\\u6392\\u9664\\u81ea\\u5df1\\uff0c\\u907f\\u514d\\u540d\\u989d\\u8ba1\\u7b97\\u628a\\u81ea\\u5df1\\u7b97\\u8fdb\\u53bb */
+		excludeEnrollmentId?: string;
+	}
+
+	let {
+		course,
+		venueId = $bindable(''),
+		sessionId = $bindable(''),
+		enrollments = [],
+		errors = {},
+		excludeEnrollmentId
+	}: Props = $props();
+
+	const venueOptions = $derived(
+		course.venues.map((v) => ({
+			label: \`\${v.name}\\uff08\\u5bb9\\u91cf \${v.capacity}\\uff09\`,
+			value: v.id
+		}))
+	);
+
+	const selectedVenue = $derived(course.venues.find((v) => v.id === venueId));
+
+	const sessionOptions = $derived(
+		(selectedVenue?.sessions ?? []).map((s) => {
+			const left = remainingSeats(course, venueId, s.id, enrollments, excludeEnrollmentId);
+			return {
+				label: \`\${formatDateTime(s.startsAt)} ~ \${formatDateTime(s.endsAt)}\\uff08\\u5269 \${left}\\uff09\`,
+				value: s.id
+			};
+		})
+	);
+
+	const seats = $derived(
+		venueId && sessionId
+			? remainingSeats(course, venueId, sessionId, enrollments, excludeEnrollmentId)
+			: null
+	);
+
+	function onVenueChange(next: string) {
+		venueId = next;
+		sessionId = '';
+	}
+</script>
+
+<SelectField
+	id="venueId"
+	label="\\u57f9\\u8bad\\u5730\\u70b9"
+	required
+	options={venueOptions}
+	error={errors.venueId}
+	bind:value={venueId}
+	onchange={onVenueChange}
+/>
+
+{#if venueId}
+	<SelectField
+		id="sessionId"
+		label="\\u57f9\\u8bad\\u573a\\u6b21"
+		required
+		options={sessionOptions}
+		error={errors.sessionId}
+		bind:value={sessionId}
+	/>
+{/if}
+
+{#if seats != null}
+	<p
+		class="mb-4 text-sm"
+		class:text-(--danger)={seats <= 0}
+		class:text-(--ink-soft)={seats > 0}
+	>
+		\\u5f53\\u524d\\u573a\\u6b21\\u5269\\u4f59\\u540d\\u989d\\uff1a
+		<span class="font-semibold" class:text-(--accent-deep)={seats > 0}>{seats}</span>
+		{#if seats <= 0}
+			<span class="ml-1">\\uff08\\u5df2\\u6ee1\\uff0c\\u65e0\\u6cd5\\u7ee7\\u7eed\\uff09</span>
+		{/if}
+	</p>
+{/if}
+`),
+
+	'routes/stats/+page.svelte': t(`<script lang="ts">
+	import ChartHost from '$lib/components/charts/ChartHost.svelte';
+	import { mockStats } from '$lib/mock/stats';
+	import type { EChartsOption } from 'echarts';
+
+	const palette = ['#0f766e', '#1a4547', '#b45309', '#59a9a1', '#0b2e2f'];
+
+	const axisStyle = {
+		axisLabel: { color: '#1a4547' },
+		axisLine: { lineStyle: { color: 'rgba(11,46,47,0.15)' } },
+		splitLine: { lineStyle: { color: 'rgba(11,46,47,0.06)' } }
+	};
+
+	const byCourseOption: EChartsOption = {
+		color: palette,
+		title: { text: '\\u5404\\u8bfe\\u7a0b\\u62a5\\u540d\\u91cf', textStyle: { color: '#0b2e2f', fontWeight: 600 } },
+		tooltip: {},
+		grid: { left: 40, right: 20, top: 56, bottom: 40 },
+		xAxis: {
+			type: 'category',
+			data: mockStats.byCourse.map((i) => i.name),
+			...axisStyle
+		},
+		yAxis: { type: 'value', ...axisStyle },
+		series: [
+			{
+				type: 'bar',
+				data: mockStats.byCourse.map((i) => i.count),
+				itemStyle: { borderRadius: [8, 8, 0, 0] },
+				barWidth: 36
+			}
+		]
+	};
+
+	const byModeOption: EChartsOption = {
+		color: palette,
+		title: { text: '\\u7ebf\\u4e0a / \\u7ebf\\u4e0b\\u5360\\u6bd4', textStyle: { color: '#0b2e2f', fontWeight: 600 } },
+		tooltip: { trigger: 'item' },
+		series: [
+			{
+				type: 'pie',
+				radius: ['42%', '68%'],
+				data: mockStats.byMode.map((i) => ({ name: i.name, value: i.value })),
+				label: { color: '#1a4547' }
+			}
+		]
+	};
+
+	const byVenueOption: EChartsOption = {
+		color: palette,
+		title: { text: '\\u5404\\u5730\\u70b9\\u62a5\\u540d vs \\u5bb9\\u91cf', textStyle: { color: '#0b2e2f', fontWeight: 600 } },
+		tooltip: {},
+		legend: { top: 28, textStyle: { color: '#1a4547' } },
+		grid: { left: 40, right: 20, top: 72, bottom: 40 },
+		xAxis: {
+			type: 'category',
+			data: mockStats.byVenue.map((i) => i.name),
+			...axisStyle
+		},
+		yAxis: { type: 'value', ...axisStyle },
+		series: [
+			{
+				name: '\\u5df2\\u62a5\\u540d',
+				type: 'bar',
+				data: mockStats.byVenue.map((i) => i.enrolled),
+				itemStyle: { borderRadius: [8, 8, 0, 0] }
+			},
+			{
+				name: '\\u5bb9\\u91cf',
+				type: 'bar',
+				data: mockStats.byVenue.map((i) => i.capacity),
+				itemStyle: { borderRadius: [8, 8, 0, 0] }
+			}
+		]
+	};
+
+	const byDayOption: EChartsOption = {
+		color: palette,
+		title: { text: '\\u6309\\u65e5\\u62a5\\u540d\\u8d8b\\u52bf', textStyle: { color: '#0b2e2f', fontWeight: 600 } },
+		tooltip: {},
+		grid: { left: 40, right: 20, top: 56, bottom: 40 },
+		xAxis: {
+			type: 'category',
+			data: mockStats.byDay.map((i) => i.date),
+			...axisStyle
+		},
+		yAxis: { type: 'value', ...axisStyle },
+		series: [
+			{
+				type: 'line',
+				smooth: true,
+				symbolSize: 8,
+				areaStyle: { color: 'rgba(15,118,110,0.12)' },
+				data: mockStats.byDay.map((i) => i.count)
+			}
+		]
+	};
+</script>
+
+<section class="mb-8">
+	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
+		Insights
+	</p>
+	<h1 class="page-title">\\u7533\\u8bf7\\u60c5\\u51b5\\u7edf\\u8ba1</h1>
+	<p class="page-lead">\\u7528\\u56fe\\u8868\\u5feb\\u901f\\u4e86\\u89e3\\u8bfe\\u7a0b\\u70ed\\u5ea6\\u3001\\u5b66\\u4e60\\u65b9\\u5f0f\\u5206\\u5e03\\u4e0e\\u573a\\u5730\\u627f\\u8f7d\\u60c5\\u51b5\\uff08\\u5f53\\u524d\\u4e3a mock \\u6570\\u636e\\uff09\\u3002</p>
+</section>
+
+<div class="grid gap-5">
+	<div class="surface p-4 md:p-5"><ChartHost option={byCourseOption} /></div>
+	<div class="grid gap-5 md:grid-cols-2">
+		<div class="surface p-4 md:p-5"><ChartHost option={byModeOption} /></div>
+		<div class="surface p-4 md:p-5"><ChartHost option={byDayOption} /></div>
+	</div>
+	<div class="surface p-4 md:p-5"><ChartHost option={byVenueOption} /></div>
+</div>
+`)
+};
+
+for (const [rel, content] of Object.entries(files)) {
+	const full = path.join(root, rel);
+	fs.mkdirSync(path.dirname(full), { recursive: true });
+	fs.writeFileSync(full, content, 'utf8');
+	console.log('fixed', rel, content.includes('我的报名') || content.includes('选择一门') || content.includes('线上学习') || content.includes('培训地点') || content.includes('各课程'));
+}

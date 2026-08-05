@@ -21,8 +21,28 @@ export default defineConfig({
 	],
 	test: {
 		expect: { requireAssertions: true },
-		environment: 'node',
-		include: ['src/**/*.{test,spec}.{js,ts}'],
-		exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+		projects: [
+			{
+				extends: true,
+				test: {
+					name: 'unit',
+					environment: 'node',
+					include: ['src/tests/domain/**/*.{test,spec}.{js,ts}']
+				}
+			},
+			{
+				extends: true,
+				resolve: {
+					// 组件测必须走 client 版 Svelte，否则 mount 会落到 server 入口报错
+					conditions: ['browser']
+				},
+				test: {
+					name: 'component',
+					environment: 'happy-dom',
+					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
+					setupFiles: ['./src/tests/setup.ts']
+				}
+			}
+		]
 	}
 });

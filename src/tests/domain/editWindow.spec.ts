@@ -23,7 +23,17 @@ describe('editWindow', () => {
 		expect(canEdit(course, new Date('2026-09-13T12:00:00+08:00'))).toBe(true);
 	});
 
+	it('cannot edit at the exact editableUntil moment', () => {
+		const until = getEditableUntil(course);
+		expect(canEdit(course, until)).toBe(false);
+	});
+
 	it('cannot edit after the window closes', () => {
 		expect(canEdit(course, new Date('2026-09-14T12:00:00+08:00'))).toBe(false);
+	});
+
+	it('can edit one millisecond before editableUntil', () => {
+		const until = getEditableUntil(course);
+		expect(canEdit(course, new Date(until.getTime() - 1))).toBe(true);
 	});
 });

@@ -98,7 +98,7 @@
 </script>
 
 <section class="mb-8">
-	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-[var(--accent-deep)] uppercase">
+	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
 		Insights
 	</p>
 	<h1 class="page-title">申请情况统计</h1>

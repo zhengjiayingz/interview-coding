@@ -17,7 +17,7 @@
 
 <article class="course-card surface flex h-full flex-col p-5 md:p-6">
 	<div class="mb-4 flex items-start justify-between gap-3">
-		<h2 class="font-[family-name:var(--font-display)] text-xl leading-snug text-[var(--ink)] md:text-[1.35rem]">
+		<h2 class="font-[family-name:var(--font-display)] text-xl leading-snug text-(--ink) md:text-[1.35rem]">
 			{course.title}
 		</h2>
 		<span class={course.mode === 'offline' ? 'chip chip-warm' : 'chip'}>
@@ -34,10 +34,10 @@
 			class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[rgba(15,118,110,0.1)]"
 			aria-hidden="true"
 		>
-			<span class="h-2 w-2 rounded-full bg-[var(--accent)]"></span>
+			<span class="h-2 w-2 rounded-full bg-(--accent)"></span>
 		</span>
 		<span>开课 {formatDateTime(course.startAt)}</span>
 	</div>
 
-	<a href="/apply/{course.id}" class="btn btn-primary self-start"> 立即报名 </a>
+	<a href="/apply/{course.id}" class="btn btn-primary self-start">立即报名</a>
 </article>

@@ -4,7 +4,7 @@
 </script>
 
 <section class="mb-8 md:mb-10">
-	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-[var(--accent-deep)] uppercase">
+	<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
 		Course Catalog
 	</p>
 	<h1 class="page-title">选择一门课程，开始报名</h1>

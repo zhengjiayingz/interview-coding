@@ -30,7 +30,7 @@ npm run dev
 | `npm run dev` | 本地开发 |
 | `npm run build` | 生产构建 |
 | `npm run preview` | 预览构建结果 |
-| `npm test` | 跑 Vitest 单测（Node，不含浏览器） |
+| `npm test` | 跑 Vitest：领域单测（Node）+ 组件测（happy-dom） |
 | `npm run test:unit` | Vitest watch |
 | `npm run check` | `svelte-check` 类型检查 |
 | `npm run lint` / `npm run format` | ESLint / Prettier |

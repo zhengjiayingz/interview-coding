@@ -1,4 +1,6 @@
-<script lang="ts">
+import fs from 'node:fs';
+
+const content = `<script lang="ts">
 	interface Section {
 		title: string;
 		stepIndex: number;
@@ -25,17 +27,23 @@
 					class="btn btn-ghost !px-3 !py-1.5 text-xs"
 					onclick={() => onEditStep?.(section.stepIndex)}
 				>
-					修改此步
+					${'\u4fee\u6539\u6b64\u6b65'}
 				</button>
 			</div>
 			<dl class="divide-y divide-[rgba(11,46,47,0.08)]">
-				{#each section.rows as row (row.label)}
+				{#each sections.rows as row (row.label)}
 					<div class="flex gap-3 py-2.5 text-sm">
 						<dt class="w-28 shrink-0 text-[rgba(11,46,47,0.5)]">{row.label}</dt>
-						<dd class="font-medium text-(--ink)">{row.value || '—'}</dd>
+						<dd class="font-medium text-(--ink)">{row.value || '${'\u2014'}'}</dd>
 					</div>
 				{/each}
 			</dl>
 		</section>
 	{/each}
 </div>
+`;
+
+// fix accidental typo sections.rows -> section.rows
+const fixed = content.replace('{#each sections.rows', '{#each section.rows');
+fs.writeFileSync('src/lib/components/PreviewPanel.svelte', fixed, 'utf8');
+console.log('written ok');
