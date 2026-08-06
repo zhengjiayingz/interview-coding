@@ -2,17 +2,17 @@
 	import { page } from '$app/state';
 	import DynamicForm from '$lib/components/DynamicForm.svelte';
 	import VenueSessionPicker from '$lib/components/VenueSessionPicker.svelte';
-	import CheckboxField from '$lib/components/fields/CheckboxField.svelte';
-	import TextField from '$lib/components/fields/TextField.svelte';
+	import { personalInfoFields, type PersonalFieldId } from '$lib/config/personalFields';
 	import { remainingSeats } from '$lib/domain/capacity';
 	import { assertReadyToSubmit } from '$lib/domain/enrollmentDraft';
 	import { canEdit, getEditableUntil } from '$lib/domain/editWindow';
-	import { validateDetails, validatePersonal } from '$lib/domain/validate';
+	import { validateDetails, validatePersonal, validatePersonalField } from '$lib/domain/validate';
 	import { getCourseById } from '$lib/mock/courses';
 	import { applications } from '$lib/stores/applications';
 	import type { CourseMode, PersonalInfo } from '$lib/types/enrollment';
 	import { formatDateTime } from '$lib/utils/dates';
 	import { get } from 'svelte/store';
+	import { onDestroy } from 'svelte';
 
 	const enrollment = $derived($applications.find((e) => e.id === page.params.id));
 	const course = $derived(enrollment ? getCourseById(enrollment.courseId) : undefined);
@@ -36,8 +36,43 @@
 	let formErrors = $state<Record<string, string>>({});
 	let saveError = $state('');
 	let saveOk = $state('');
+	/** 开始淡出时为 true，动画结束后清空文案 */
+	let saveOkLeaving = $state(false);
 	let saving = $state(false);
 	let hydratedFor = $state<string | null>(null);
+	let saveOkHideTimer: ReturnType<typeof setTimeout> | undefined;
+	let saveOkClearTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function clearSaveOkTimers() {
+		if (saveOkHideTimer !== undefined) clearTimeout(saveOkHideTimer);
+		if (saveOkClearTimer !== undefined) clearTimeout(saveOkClearTimer);
+		saveOkHideTimer = undefined;
+		saveOkClearTimer = undefined;
+	}
+
+	function dismissSaveOk() {
+		clearSaveOkTimers();
+		saveOk = '';
+		saveOkLeaving = false;
+	}
+
+	/** 淡入展示约 2.4s，再淡出约 0.35s 后移除 */
+	function flashSaveOk(message: string) {
+		clearSaveOkTimers();
+		saveOkLeaving = false;
+		saveOk = message;
+		saveOkHideTimer = setTimeout(() => {
+			saveOkLeaving = true;
+			saveOkClearTimer = setTimeout(() => {
+				saveOk = '';
+				saveOkLeaving = false;
+				saveOkHideTimer = undefined;
+				saveOkClearTimer = undefined;
+			}, 350);
+		}, 2400);
+	}
+
+	onDestroy(clearSaveOkTimers);
 
 	/** 进入详情或切换记录时，用已有报名预填表单 */
 	$effect(() => {
@@ -51,14 +86,11 @@
 		agreedToNotice = enrollment.agreedToNotice;
 		formErrors = {};
 		saveError = '';
-		saveOk = '';
+		dismissSaveOk();
 		hydratedFor = enrollment.id;
 	});
 
-	const showVenuePicker = $derived(
-		!!course &&
-			(course.mode === 'offline' || (course.mode === 'hybrid' && learningMode === 'offline'))
-	);
+	const showVenuePicker = $derived(!!course && course.mode === 'offline');
 
 	const selectedSeatsLeft = $derived(
 		!course || !showVenuePicker || !venueId || !sessionId || !enrollment
@@ -88,7 +120,7 @@
 	function save() {
 		if (!course || !enrollment || !editable || saving) return;
 		saveError = '';
-		saveOk = '';
+		dismissSaveOk();
 
 		const draft = draftPayload();
 		const personalErrors = validatePersonal(draft.personal);
@@ -113,14 +145,14 @@
 			applications.upsert({
 				...enrollment,
 				personal: { ...draft.personal },
-				learningMode: course.mode === 'online' ? 'online' : draft.learningMode,
+				learningMode: course.mode,
 				venueId: draft.venueId,
 				sessionId: draft.sessionId,
 				extra: { ...draft.extra },
 				agreedToNotice: draft.agreedToNotice,
 				updatedAt: new Date().toISOString()
 			});
-			saveOk = '已保存修改';
+			flashSaveOk('已保存修改');
 		} catch (e) {
 			saveError = e instanceof Error ? e.message : '保存失败';
 		} finally {
@@ -161,23 +193,16 @@
 
 	{#if editable}
 		<section class="surface mb-5 max-w-xl p-5 md:p-6">
-			<h2 class="mb-4 font-[family-name:var(--font-display)] text-xl text-(--ink)">修改报名信息</h2>
+			<h2 class="mb-4 font-(family-name:--font-display) text-xl text-(--ink)">修改报名信息</h2>
 
-			<TextField id="edit-name" label="姓名" required error={formErrors.name} bind:value={personal.name} />
-			<TextField
-				id="edit-phone"
-				label="联系电话"
-				required
-				error={formErrors.phone}
-				bind:value={personal.phone}
-			/>
-			<TextField id="edit-email" label="邮箱" error={formErrors.email} bind:value={personal.email} />
-			<TextField
-				id="edit-address"
-				label="地址"
-				required
-				error={formErrors.address}
-				bind:value={personal.address}
+			<DynamicForm
+				schema={personalInfoFields}
+				idPrefix="edit-"
+				bind:values={personal}
+				bind:errors={formErrors}
+				validateField={(id, values) =>
+					validatePersonalField(id as PersonalFieldId, values as unknown as PersonalInfo)
+				}
 			/>
 
 			<p class="mb-4 text-sm text-(--ink-soft)">
@@ -200,15 +225,6 @@
 				<DynamicForm schema={course.extraFieldSchema} bind:values={extra} errors={formErrors} />
 			{/if}
 
-			{#if course.notice}
-				<CheckboxField
-					id="edit-agreedToNotice"
-					label={course.notice}
-					error={formErrors.agreedToNotice}
-					bind:checked={agreedToNotice}
-				/>
-			{/if}
-
 			{#if sessionHasNoSeats}
 				<p class="mb-3 rounded-xl bg-[rgba(185,28,28,0.08)] px-3.5 py-3 text-sm text-(--danger)">
 					该场次名额已满，请更换地点或场次后再保存。
@@ -220,7 +236,12 @@
 				</p>
 			{/if}
 			{#if saveOk}
-				<p class="mb-3 rounded-xl bg-[rgba(15,118,110,0.1)] px-3.5 py-3 text-sm text-(--accent-deep)">
+				<p
+					class="toast-banner toast-banner-ok mb-3 {saveOkLeaving
+						? 'toast-banner-out'
+						: 'toast-banner-in'}"
+					role="status"
+				>
 					{saveOk}
 				</p>
 			{/if}

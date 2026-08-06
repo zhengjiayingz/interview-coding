@@ -34,8 +34,7 @@ export function assertReadyToSubmit(
 		throw new Error('表单未填写完整');
 	}
 
-	const offline =
-		course.mode === 'offline' || (course.mode === 'hybrid' && draft.learningMode === 'offline');
+	const offline = course.mode === 'offline';
 	if (offline && draft.venueId && draft.sessionId) {
 		assertCanBook(course, draft.venueId, draft.sessionId, enrollments, excludeEnrollmentId);
 	}
@@ -54,7 +53,7 @@ export function toEnrollment(
 		courseId: course.id,
 		status: 'submitted',
 		personal: { ...draft.personal },
-		learningMode: course.mode === 'online' ? 'online' : draft.learningMode,
+		learningMode: course.mode,
 		venueId: draft.venueId,
 		sessionId: draft.sessionId,
 		extra: { ...draft.extra },

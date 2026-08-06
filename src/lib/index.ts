@@ -1,9 +1,12 @@
 export type * from './types/enrollment';
 export { canEdit, getEditableUntil } from './domain/editWindow';
 export { remainingSeats, assertCanBook } from './domain/capacity';
-export { validatePersonal, validateDetails } from './domain/validate';
+export { validatePersonal, validateDetails, validatePersonalField } from './domain/validate';
 export { assertReadyToSubmit, toEnrollment } from './domain/enrollmentDraft';
 export type { EnrollmentDraft } from './domain/enrollmentDraft';
 export { mockCourses, getCourseById } from './mock/courses';
-export { mockStats } from './mock/stats';
+export { buildEnrollmentStats } from './domain/stats';
+export type { EnrollmentStats } from './domain/stats';
 export { applications } from './stores/applications';
+export { personalInfoFields, personalFieldDisplayValue } from './config/personalFields';
+export type { PersonalFieldSchema, PersonalFieldId } from './config/personalFields';

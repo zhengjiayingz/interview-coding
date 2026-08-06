@@ -5,22 +5,25 @@
 	import PreviewPanel from '$lib/components/PreviewPanel.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import VenueSessionPicker from '$lib/components/VenueSessionPicker.svelte';
-	import CheckboxField from '$lib/components/fields/CheckboxField.svelte';
-	import SelectField from '$lib/components/fields/SelectField.svelte';
-	import TextField from '$lib/components/fields/TextField.svelte';
+	import NoticeGate from '$lib/components/NoticeGate.svelte';
+	import {
+		personalFieldDisplayValue,
+		personalInfoFields,
+		type PersonalFieldId
+	} from '$lib/config/personalFields';
 	import { assertReadyToSubmit, toEnrollment } from '$lib/domain/enrollmentDraft';
 	import { remainingSeats } from '$lib/domain/capacity';
-	import { validateDetails, validatePersonal } from '$lib/domain/validate';
+	import { validateDetails, validatePersonal, validatePersonalField } from '$lib/domain/validate';
 	import { getCourseById } from '$lib/mock/courses';
 	import { applications } from '$lib/stores/applications';
-	import type { CourseMode } from '$lib/types/enrollment';
+	import type { CourseMode, PersonalInfo } from '$lib/types/enrollment';
 	import { formatDateTime } from '$lib/utils/dates';
 	import { get } from 'svelte/store';
 
 	const steps = ['个人信息', '培训详情', '预览确认'];
 
 	let current = $state(0);
-	let personal = $state({
+	let personal = $state<PersonalInfo>({
 		name: '',
 		phone: '',
 		email: '',
@@ -34,15 +37,19 @@
 	let stepErrors = $state<Record<string, string>>({});
 	let submitError = $state('');
 	let submitting = $state(false);
-	let modeInitializedFor = $state<string | null>(null);
 
+	let modeInitializedFor = $state<string | null>(null);
+	// 从 URL 参数获取课程 ID，并获取课程信息
 	const course = $derived(getCourseById(page.params.courseId ?? ''));
 
-	/** 按课程 mode 初始化学习方式；切换课程时重置地点场次 */
+	/** 按课程 mode 初始化学习方式（与课程一致）；切换课程时重置地点场次 */
+	// $effect 是 Svelte 的副作用函数，用于用来在响应式状态变化后自动跑一段副作用，这里按课程初始化 learningMode
+	// 如果课程Id变了，则重新初始化学习方式，并且重置各种响应式数据
 	$effect(() => {
 		if (!course) return;
+		// 已经按哪门课做过学习方式初始化
 		if (modeInitializedFor === course.id) return;
-		learningMode = course.mode === 'hybrid' ? 'online' : course.mode;
+		learningMode = course.mode;
 		venueId = '';
 		sessionId = '';
 		extra = {};
@@ -51,18 +58,8 @@
 		submitError = '';
 		modeInitializedFor = course.id;
 	});
-
-	const showVenuePicker = $derived(
-		!!course &&
-			(course.mode === 'offline' || (course.mode === 'hybrid' && learningMode === 'offline'))
-	);
-
-	const learningModeLocked = $derived(!!course && course.mode !== 'hybrid');
-
-	const learningModeOptions = [
-		{ label: '线上学习', value: 'online' },
-		{ label: '线下培训', value: 'offline' }
-	];
+	// 是否显示地点场次选择器
+	const showVenuePicker = $derived(!!course && course.mode === 'offline');
 
 	/** 当前所选场次剩余名额；非线下或不完整选择时为 null */
 	const selectedSeatsLeft = $derived(
@@ -129,6 +126,7 @@
 			submitting = true;
 			assertReadyToSubmit(course, draft, get(applications));
 			const enrollment = toEnrollment(course, draft, crypto.randomUUID());
+			// 保存报名信息
 			applications.upsert(enrollment);
 			goto('/applications');
 		} catch (e) {
@@ -139,9 +137,7 @@
 	}
 
 	function modeLabel(mode: CourseMode) {
-		if (mode === 'online') return '线上学习';
-		if (mode === 'offline') return '线下培训';
-		return '混合';
+		return mode === 'online' ? '线上学习' : '线下培训';
 	}
 
 	function formatSession(startsAt: string, endsAt: string) {
@@ -161,32 +157,18 @@
 		<h1 class="page-title">报名 · {course.title}</h1>
 		<p class="page-lead">分步填写信息，预览确认后再提交。有误可随时回到对应步骤修改。</p>
 	</section>
-
+	// 步骤条
 	<Stepper {steps} {current} />
 
 	{#if current === 0}
 		<section class="surface page-enter max-w-xl p-5 md:p-6">
-			<TextField
-				id="name"
-				label="姓名"
-				required
-				error={stepErrors.name}
-				bind:value={personal.name}
-			/>
-			<TextField
-				id="phone"
-				label="联系电话"
-				required
-				error={stepErrors.phone}
-				bind:value={personal.phone}
-			/>
-			<TextField id="email" label="邮箱" error={stepErrors.email} bind:value={personal.email} />
-			<TextField
-				id="address"
-				label="地址"
-				required
-				error={stepErrors.address}
-				bind:value={personal.address}
+			<DynamicForm
+				schema={personalInfoFields}
+				bind:values={personal}
+				bind:errors={stepErrors}
+				validateField={(id, values) =>
+					validatePersonalField(id as PersonalFieldId, values as unknown as PersonalInfo)
+				}
 			/>
 			<div class="mt-2 flex justify-end">
 				<button type="button" class="btn btn-primary" onclick={goNextFromPersonal}>下一步</button>
@@ -194,25 +176,10 @@
 		</section>
 	{:else if current === 1}
 		<section class="surface page-enter max-w-xl p-5 md:p-6">
-			{#if learningModeLocked}
-				<p class="mb-4 text-sm text-(--ink-soft)">
-					学习方式：<span class="font-semibold text-(--ink)">{modeLabel(learningMode)}</span>
-					（由课程类型决定）
-				</p>
-			{:else}
-				<SelectField
-					id="learningMode"
-					label="学习方式"
-					required
-					options={learningModeOptions}
-					error={stepErrors.learningMode}
-					bind:value={learningMode}
-					onchange={() => {
-						venueId = '';
-						sessionId = '';
-					}}
-				/>
-			{/if}
+			<p class="mb-4 text-sm text-(--ink-soft)">
+				学习方式：<span class="font-semibold text-(--ink)">{modeLabel(learningMode)}</span>
+				（由课程类型决定）
+			</p>
 
 			{#if showVenuePicker}
 				<VenueSessionPicker
@@ -235,12 +202,7 @@
 			{/if}
 
 			{#if course.notice}
-				<CheckboxField
-					id="agreedToNotice"
-					label={course.notice}
-					error={stepErrors.agreedToNotice}
-					bind:checked={agreedToNotice}
-				/>
+				<NoticeGate notice={course.notice} bind:agreed={agreedToNotice} error={stepErrors.agreedToNotice} />
 			{/if}
 
 			<div class="mt-2 flex flex-col gap-3">
@@ -278,12 +240,10 @@
 					{
 						title: '个人信息',
 						stepIndex: 0,
-						rows: [
-							{ label: '姓名', value: personal.name },
-							{ label: '电话', value: personal.phone },
-							{ label: '邮箱', value: personal.email },
-							{ label: '地址', value: personal.address }
-						]
+						rows: personalInfoFields.map((field) => ({
+							label: field.label,
+							value: personalFieldDisplayValue(field, personal)
+						}))
 					},
 					{
 						title: '培训详情 / 扩展信息',
@@ -312,7 +272,7 @@
 								value: String(extra[f.id] ?? '')
 							})),
 							...(course.notice
-								? [{ label: '同意须知', value: agreedToNotice ? '是' : '否' }]
+								? [{ label: '报名须知', value: agreedToNotice ? '已阅读' : '未阅读' }]
 								: [])
 						]
 					}

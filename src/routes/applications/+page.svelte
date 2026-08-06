@@ -24,10 +24,10 @@
 	<h1 class="page-title">我的报名</h1>
 	<p class="page-lead">查看申请进度；开课前一天之前可修改部分报名信息。</p>
 </section>
-
+ <!-- 从localStorage读取报名信息,进行展示 -->
 {#if $applications.length === 0}
 	<section class="surface empty-state">
-		<p class="mb-1 font-[family-name:var(--font-display)] text-2xl text-(--ink)">还没有报名记录</p>
+		<p class="mb-1 font-(family-name:--font-display) text-2xl text-(--ink)">还没有报名记录</p>
 		<p class="mb-5 text-sm">从课程目录挑选一门，完成向导即可出现在这里。</p>
 		<a class="btn btn-primary" href="/courses">去选课</a>
 	</section>
@@ -48,7 +48,7 @@
 					</p>
 					<p class="mt-1 text-sm text-(--ink-soft)">{item.personal.name} · {item.personal.phone}</p>
 				</div>
-				<a class="btn btn-ghost !px-3 !py-1.5 text-xs" href="/applications/{item.id}">查看详情</a>
+				<a class="btn btn-ghost px-3! py-1.5! text-xs" href="/applications/{item.id}">查看详情</a>
 			</li>
 		{/each}
 	</ul>

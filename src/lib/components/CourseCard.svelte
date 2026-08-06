@@ -10,14 +10,13 @@
 
 	const modeLabel: Record<Course['mode'], string> = {
 		online: '线上学习',
-		offline: '线下培训',
-		hybrid: '混合模式'
+		offline: '线下培训'
 	};
 </script>
 
 <article class="course-card surface flex h-full flex-col p-5 md:p-6">
 	<div class="mb-4 flex items-start justify-between gap-3">
-		<h2 class="font-[family-name:var(--font-display)] text-xl leading-snug text-(--ink) md:text-[1.35rem]">
+		<h2 class="font-(family-name:--font-display) text-xl leading-snug text-(--ink) md:text-[1.35rem]">
 			{course.title}
 		</h2>
 		<span class={course.mode === 'offline' ? 'chip chip-warm' : 'chip'}>

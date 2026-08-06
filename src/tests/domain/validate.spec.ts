@@ -1,4 +1,4 @@
-import { validateDetails, validatePersonal } from '$lib/domain/validate';
+import { validateDetails, validatePersonal, validatePersonalField } from '$lib/domain/validate';
 import type { Course } from '$lib/types/enrollment';
 import { describe, expect, it } from 'vitest';
 
@@ -52,6 +52,28 @@ describe('validatePersonal', () => {
 	});
 });
 
+describe('validatePersonalField', () => {
+	it('validates single phone on blur style check', () => {
+		expect(
+			validatePersonalField('phone', {
+				name: '张三',
+				phone: '123',
+				email: '',
+				address: '广州'
+			})
+		).toMatch(/手机号/);
+
+		expect(
+			validatePersonalField('phone', {
+				name: '张三',
+				phone: '13800000000',
+				email: '',
+				address: '广州'
+			})
+		).toBeNull();
+	});
+});
+
 const offlineCourse = {
 	id: 'c-off',
 	title: 't',
@@ -96,14 +118,6 @@ const onlineCourse = {
 	venues: [],
 	extraFieldSchema: [],
 	notice: '线上须知'
-} satisfies Course;
-
-const hybridCourse = {
-	...offlineCourse,
-	id: 'c-hy',
-	mode: 'hybrid' as const,
-	extraFieldSchema: [],
-	notice: undefined
 } satisfies Course;
 
 describe('validateDetails', () => {
@@ -161,25 +175,5 @@ describe('validateDetails', () => {
 		expect(errors.venueId).toBeUndefined();
 		expect(errors.sessionId).toBeUndefined();
 		expect(Object.keys(errors)).toHaveLength(0);
-	});
-
-	it('hybrid online branch skips venue', () => {
-		const errors = validateDetails(hybridCourse, {
-			learningMode: 'online',
-			extra: {},
-			agreedToNotice: true
-		});
-		expect(errors.venueId).toBeUndefined();
-		expect(Object.keys(errors)).toHaveLength(0);
-	});
-
-	it('hybrid offline branch requires venue', () => {
-		const errors = validateDetails(hybridCourse, {
-			learningMode: 'offline',
-			extra: {},
-			agreedToNotice: true
-		});
-		expect(errors.venueId).toBeTruthy();
-		expect(errors.sessionId).toBeTruthy();
 	});
 });

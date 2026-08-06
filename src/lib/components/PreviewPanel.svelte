@@ -17,12 +17,12 @@
 	{#each sections as section (section.title)}
 		<section class="surface p-5">
 			<div class="mb-3 flex items-center justify-between gap-3">
-				<h3 class="font-[family-name:var(--font-display)] text-xl text-(--ink)">
+				<h3 class="font-(family-name:--font-display) text-xl text-(--ink)">
 					{section.title}
 				</h3>
 				<button
 					type="button"
-					class="btn btn-ghost !px-3 !py-1.5 text-xs"
+					class="btn btn-ghost px-3! py-1.5! text-xs"
 					onclick={() => onEditStep?.(section.stepIndex)}
 				>
 					修改此步

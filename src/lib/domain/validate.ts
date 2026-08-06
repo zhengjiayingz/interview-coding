@@ -4,35 +4,48 @@
  * 按向导步骤拆分：个人信息一步、培训详情一步（方式 / 地点场次 / schema 扩展字段）。
  * 返回 `字段 id → 错误文案`；空对象表示该步通过。页面用其高亮错误并阻止进入预览/提交。
  */
+import {
+	personalInfoFields,
+	type PersonalFieldId
+} from '$lib/config/personalFields';
 import type { Course, Enrollment, PersonalInfo } from '$lib/types/enrollment';
 
 /** 单步校验错误表：key 为表单字段名 */
 export type StepErrors = Record<string, string>;
 
-/** 中国大陆手机号：1 开头，第二位 3–9，共 11 位 */
-const PHONE_RE = /^1[3-9]\d{9}$/;
+/** 校验单个个人信息字段；通过返回 null（用于失焦即时反馈） */
+export function validatePersonalField(
+	fieldId: PersonalFieldId,
+	personal: PersonalInfo
+): string | null {
+	const field = personalInfoFields.find((f) => f.id === fieldId);
+	if (!field) return null;
 
-/** 常见邮箱格式（非空时校验；空邮箱仍视为可选） */
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	const value = String(personal[field.id] ?? '').trim();
 
-/** 第 1 步：姓名、电话、地址必填；电话/邮箱做格式校验（邮箱可空） */
+	if (field.required && !value) {
+		return field.type === 'select' ? `请选择${field.label}` : `请填写${field.label}`;
+	}
+
+	if (value && field.pattern && !field.pattern.test(value)) {
+		return field.patternMessage ?? `${field.label}格式不正确`;
+	}
+
+	return null;
+}
+
+/**
+ * 第 1 步：按 personalInfoFields 配置做必填 + 格式校验。
+ * 规则写在配置里，这里只负责执行。
+ */
 export function validatePersonal(personal: PersonalInfo): StepErrors {
 	const errors: StepErrors = {};
-	if (!personal.name?.trim()) errors.name = '请填写姓名';
 
-	const phone = personal.phone?.trim() ?? '';
-	if (!phone) {
-		errors.phone = '请填写联系电话';
-	} else if (!PHONE_RE.test(phone)) {
-		errors.phone = '请输入有效的 11 位手机号';
+	for (const field of personalInfoFields) {
+		const message = validatePersonalField(field.id, personal);
+		if (message) errors[field.id] = message;
 	}
 
-	const email = personal.email?.trim() ?? '';
-	if (email && !EMAIL_RE.test(email)) {
-		errors.email = '请输入有效的邮箱地址';
-	}
-
-	if (!personal.address?.trim()) errors.address = '请填写地址';
 	return errors;
 }
 
@@ -41,11 +54,9 @@ type DetailsDraft = Pick<
 	'learningMode' | 'venueId' | 'sessionId' | 'extra' | 'agreedToNotice'
 >;
 
-/** 是否需要选择线下地点/场次 */
-function needsVenueSession(course: Course, learningMode: Enrollment['learningMode']): boolean {
-	if (course.mode === 'offline') return true;
-	if (course.mode === 'hybrid' && learningMode === 'offline') return true;
-	return false;
+/** 是否需要选择线下地点/场次（仅线下课） */
+function needsVenueSession(course: Course): boolean {
+	return course.mode === 'offline';
 }
 
 /**
@@ -58,7 +69,7 @@ export function validateDetails(course: Course, draft: DetailsDraft): StepErrors
 		errors.learningMode = '请选择学习方式';
 	}
 
-	if (needsVenueSession(course, draft.learningMode)) {
+	if (needsVenueSession(course)) {
 		if (!draft.venueId) errors.venueId = '请选择培训地点';
 		if (!draft.sessionId) errors.sessionId = '请选择场次时间';
 	}
@@ -71,7 +82,7 @@ export function validateDetails(course: Course, draft: DetailsDraft): StepErrors
 	}
 
 	if (course.notice && !draft.agreedToNotice) {
-		errors.agreedToNotice = '请同意报名须知';
+		errors.agreedToNotice = '请先阅读报名须知';
 	}
 
 	return errors;

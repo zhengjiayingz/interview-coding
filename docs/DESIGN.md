@@ -34,7 +34,7 @@
 | 字段                         | 说明                                                          |
 | ---------------------------- | ------------------------------------------------------------- |
 | `id`、`title`、`description` | 展示用                                                        |
-| `mode`                       | `online` \| `offline` \| `hybrid`                             |
+| `mode`                       | `online` \| `offline`                                         |
 | `startAt`、`endAt`           | 用于「开课前一天可编辑」判定                                  |
 | `venues[]`                   | 线下/混合：`{ id, name, address, capacity, sessions[] }`      |
 | 各地点 `sessions[]`          | `{ id, startsAt, endsAt, seatsLeft }`（或由报名数据推导余量） |
@@ -47,8 +47,8 @@
 | -------------------------- | ------------------------------------------------------ |
 | `id`、`courseId`、`status` | `draft` \| `submitted` \| `cancelled`                  |
 | `personal`                 | `name`、`phone`、`email`、`address`，可选 `employeeId` |
-| `learningMode`             | 课程为 hybrid 时用户选择的学习方式                     |
-| `venueId`、`sessionId`     | 线下（或 hybrid 选线下）时必填                         |
+| `learningMode`             | 与课程 `mode` 一致（online / offline）                     |
+| `venueId`、`sessionId`     | 线下课时必填                                               |
 | `extra`                    | `Record<string, unknown>`，按 schema 字段 id 存值      |
 | `agreedToNotice`           | 是否同意须知                                           |
 | `createdAt`、`updatedAt`   | 审计时间                                               |

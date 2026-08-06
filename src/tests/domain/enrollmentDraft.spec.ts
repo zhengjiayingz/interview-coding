@@ -112,7 +112,7 @@ describe('toEnrollment', () => {
 		expect(enrollment.extra.tshirt).toBe('M');
 	});
 
-	it('forces online learningMode for online courses', () => {
+	it('sets learningMode from course.mode for online courses', () => {
 		const online = mockCourses[0];
 		const enrollment = toEnrollment(
 			online,

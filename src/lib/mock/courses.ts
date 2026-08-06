@@ -3,6 +3,18 @@ import type { Course } from '$lib/types/enrollment';
 /** 课程 mock：后续按业务补全场次与扩展字段示例 */
 export const mockCourses: Course[] = [
 	{
+		id: 'c-online-lock-demo',
+		title: '新员工入职合规速览（线上）',
+		description:
+			'开课时间为 8 月 8 日 08:00。可编辑截止为开课前一天同钟点（8/7 08:00），面试当天白天报名详情应为只读。',
+		mode: 'online',
+		startAt: '2026-08-08T08:00:00+08:00',
+		endAt: '2026-08-08T12:00:00+08:00',
+		venues: [],
+		extraFieldSchema: [],
+		notice: '请确保报名信息真实有效。本课程用于演示「开课前一天之后不可修改」。'
+	},
+	{
 		id: 'c-online-1',
 		title: '信息安全意识培训（线上）',
 		description: '面向全员的安全基础课程，支持在线自学。',
@@ -11,7 +23,8 @@ export const mockCourses: Course[] = [
 		endAt: '2026-09-15T12:00:00+08:00',
 		venues: [],
 		extraFieldSchema: [],
-		notice: '请确保报名信息真实有效。'
+		notice:
+			'请确保报名信息真实有效。\n\n本课程为线上自学，请在开课前完成账号准备，并遵守学习平台使用规范。'
 	},
 	{
 		id: 'c-offline-1',
@@ -70,7 +83,8 @@ export const mockCourses: Course[] = [
 				]
 			}
 		],
-		notice: '请提前 15 分钟到场签到。'
+		notice:
+			'请提前 15 分钟到场签到。\n\n请携带工牌，服从现场工作人员安排。若因故无法参加，请在可编辑窗口内及时修改或取消报名，以免占用名额。'
 	}
 ];
 

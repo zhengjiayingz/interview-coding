@@ -7,6 +7,7 @@
 		error?: string;
 		multiline?: boolean;
 		onchange?: (value: string) => void;
+		onblur?: () => void;
 	}
 
 	let {
@@ -16,7 +17,8 @@
 		required = false,
 		error = '',
 		multiline = false,
-		onchange
+		onchange,
+		onblur
 	}: Props = $props();
 </script>
 
@@ -30,6 +32,7 @@
 			class="field-control min-h-24"
 			bind:value
 			oninput={() => onchange?.(value)}
+			{onblur}
 		></textarea>
 	{:else}
 		<input
@@ -38,6 +41,7 @@
 			class="field-control"
 			bind:value
 			oninput={() => onchange?.(value)}
+			{onblur}
 		/>
 	{/if}
 	{#if error}

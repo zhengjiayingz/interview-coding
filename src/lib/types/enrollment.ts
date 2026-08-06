@@ -1,5 +1,5 @@
-/** 课程学习方式：线上 / 线下 / 混合 */
-export type CourseMode = 'online' | 'offline' | 'hybrid';
+/** 课程学习方式：线上 / 线下（与题面一致） */
+export type CourseMode = 'online' | 'offline';
 
 /** 报名单状态 */
 export type EnrollmentStatus = 'draft' | 'submitted' | 'cancelled';
@@ -25,7 +25,7 @@ export interface Session {
 	seatsLeft?: number;
 }
 
-/** 线下/混合课的培训地点：含地址、总容量及下属场次 */
+/** 线下课的培训地点：含地址、总容量及下属场次 */
 export interface Venue {
 	id: string;
 	name: string;
@@ -62,7 +62,7 @@ export interface Enrollment {
 	courseId: string;
 	status: EnrollmentStatus;
 	personal: PersonalInfo;
-	learningMode: CourseMode;
+	learningMode: CourseMode; /** 与课程 mode 一致：线上课为 online，线下课为 offline */
 	venueId?: string;
 	sessionId?: string;
 	extra: Record<string, unknown>;
