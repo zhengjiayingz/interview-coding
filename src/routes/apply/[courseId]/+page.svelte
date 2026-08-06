@@ -150,18 +150,27 @@
 		<a class="btn btn-primary" href="/courses">返回课程列表</a>
 	</section>
 {:else}
-	<section class="mb-6">
+	<section class="apply-hero mb-6">
 		<p class="mb-2 text-xs font-semibold tracking-[0.18em] text-(--accent-deep) uppercase">
 			Enrollment
 		</p>
+		<div class="mb-3 flex flex-wrap items-center gap-2">
+			<span class={course.mode === 'offline' ? 'chip chip-warm' : 'chip'}>
+				{modeLabel(course.mode)}
+			</span>
+			<span class="chip">开课 {formatDateTime(course.startAt)}</span>
+		</div>
 		<h1 class="page-title">报名 · {course.title}</h1>
 		<p class="page-lead">分步填写信息，预览确认后再提交。有误可随时回到对应步骤修改。</p>
 	</section>
-	// 步骤条
+	 <!-- 步骤条 -->
 	<Stepper {steps} {current} />
 
 	{#if current === 0}
-		<section class="surface page-enter max-w-xl p-5 md:p-6">
+		<section class="surface step-panel page-enter max-w-xl p-5 md:p-6">
+			<p class="mb-4 text-xs font-semibold tracking-[0.14em] text-(--accent-deep) uppercase">
+				Step 1 · 基本资料
+			</p>
 			<DynamicForm
 				schema={personalInfoFields}
 				bind:values={personal}
@@ -175,7 +184,10 @@
 			</div>
 		</section>
 	{:else if current === 1}
-		<section class="surface page-enter max-w-xl p-5 md:p-6">
+		<section class="surface step-panel page-enter max-w-xl p-5 md:p-6">
+			<p class="mb-4 text-xs font-semibold tracking-[0.14em] text-(--accent-deep) uppercase">
+				Step 2 · 培训安排
+			</p>
 			<p class="mb-4 text-sm text-(--ink-soft)">
 				学习方式：<span class="font-semibold text-(--ink)">{modeLabel(learningMode)}</span>
 				（由课程类型决定）
@@ -235,6 +247,9 @@
 		</section>
 	{:else}
 		<section class="page-enter">
+			<p class="mb-4 text-xs font-semibold tracking-[0.14em] text-(--accent-deep) uppercase">
+				Step 3 · 确认提交
+			</p>
 			<PreviewPanel
 				sections={[
 					{

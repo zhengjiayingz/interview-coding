@@ -15,7 +15,7 @@
 
 <div class="space-y-4">
 	{#each sections as section (section.title)}
-		<section class="surface p-5">
+		<section class="surface step-panel p-5">
 			<div class="mb-3 flex items-center justify-between gap-3">
 				<h3 class="font-(family-name:--font-display) text-xl text-(--ink)">
 					{section.title}

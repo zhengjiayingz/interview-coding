@@ -80,12 +80,20 @@
 		<!-- 倒计时期间禁止点遮罩关闭 -->
 		<button
 			type="button"
-			class="absolute inset-0 bg-[rgba(11,46,47,0.45)] backdrop-blur-[2px]"
+			class="backdrop-enter absolute inset-0 bg-[rgba(11,46,47,0.45)] backdrop-blur-[3px]"
+			style="animation: soft-fade 220ms ease;"
 			aria-label="关闭遮罩"
 			disabled={secondsLeft > 0}
 			onclick={closeModal}
 		></button>
-		<div class="relative z-10 w-full max-w-md rounded-2xl bg-white p-5 shadow-(--shadow) md:p-6">
+		<div
+			class="modal-enter relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-(--line) bg-white p-5 shadow-(--shadow) md:p-6"
+			style="animation: modal-rise 280ms cubic-bezier(0.22, 1, 0.36, 1);"
+		>
+			<span
+				class="absolute inset-x-0 top-0 h-[3px] bg-linear-to-r from-(--accent) via-[#59a9a1] to-transparent"
+				aria-hidden="true"
+			></span>
 			<h2 id="notice-title" class="font-(--font-display) text-2xl text-(--ink)">报名须知</h2>
 			<div class="mt-4 max-h-[50vh] overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-(--ink-soft)">
 				{notice}
